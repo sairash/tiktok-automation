@@ -1,0 +1,151 @@
+{{define "content"}}
+<section class="text-white">
+    <div class="mx-auto max-w-screen-xl px-4 py-4 lg:flex lg:h-screen">
+        <div class="h-full flex w-full">
+            {{include "user/sidebar"}}
+        
+            <div class="flex flex-col w-full">
+                <div class="overflow-x-auto sm:mx-0.5 lg:mx-0.5">
+                    <div class="py-2 inline-block min-w-full sm:px-6 lg:px-8">
+                        <form method="post" action="/home/automation/create" class="overflow-hidden">
+                            <input type="text" class="hidden" value="use_account" name="type_of_automation[]" id="">
+                            <input type="text" class="hidden" value="{{.user_ids}}" name="amount[]" id="">
+                            <div class="my-2">
+                                Create Automation
+                            </div>
+                            <table class="min-w-full text-center">
+                                <thead class="bg-gray-800 border-b border-black">
+                                    <tr>
+                                        <th scope="col" class="text-sm font-medium px-6 py-4">
+                                            Type
+                                        </th>
+                                        <th scope="col" class="text-sm font-medium px-6 py-4">
+                                            Value
+                                        </th>
+                                        <th scope="col" class="text-sm font-medium px-6 py-4">
+                                            Delete
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="mt-5" id="container-data">
+                                        
+                                </tbody>
+                            </table>
+                            <div class="w-full bg-gray-700 border-b border-black transition duration-300 ease-in-out hover:bg-gray-600 text-black flex justify-center px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <a onclick="add_to_data()" class="rounded-md bg-white hover:bg-blue-600 px-5 py-2.5 text-sm font-medium text-black hover:text-white shadow cursor-pointer">+</a>
+                            </div>
+                            <div class="w-full flex justify-end mt-5">
+                                <button class="rounded-md bg-white hover:bg-blue-600 px-5 py-2.5 text-sm font-medium text-black hover:text-white shadow" type="submit">
+                                    Create new automation
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</section>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+    var data = [
+        {
+            type_of_automation: "wait",
+            amount: 10
+        }
+    ]
+
+    var posts = {{.posts}}
+
+    function element_generator(type_of_automation, amount, place){
+        edit_value = true
+        type_post = false
+        string_to_return = `<tr class="bg-gray-700 border-b border-black transition duration-300 ease-in-out hover:bg-gray-600 text-black">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" id="${place}-container">
+                <select name="type_of_automation[]" class="px-2 bg-white h-10 rounded border border-black" onchange="changed_type(this.value, ${place})" id="${place}-select">`;
+
+            if(type_of_automation == "wait"){
+                string_to_return += `<option selected value="wait"> Wait </option>`
+            }else{
+                string_to_return += `<option value="wait"> Wait </option>`
+            }
+
+            if(type_of_automation == "post"){
+                string_to_return += `<option selected value="post"> Post </option>`
+                type_post = true
+            }else{
+                string_to_return += `<option value="post"> Post </option>`
+            }
+
+            if(type_of_automation == "clear_account"){
+                string_to_return += `<option selected value="clear_account"> Clear Account </option>`
+                edit_value = false
+            }else{
+                string_to_return += `<option value="clear_account"> Clear Account </option>`
+            }
+
+            if(type_of_automation == "repeat"){
+                string_to_return += `<option selected value="repeat"> Repeat </option>`
+                edit_value = false
+            }else{
+                string_to_return += `<option value="repeat"> Repeat </option>`
+            }
+            string_to_return += `</select></td>
+            <td class="text-sm font-light px-6 py-4 whitespace-nowrap">  `;
+
+            if(!type_post){
+                string_to_return += `<input type="text" onchange="changed_value(this.value, ${place})" name="amount[]"  id="${place}-value" placeholder="Value" value="${amount}" class="px-2 w-full h-10 rounded border border-black`;
+                if(!edit_value){
+                    string_to_return += `bg-grey-200 hidden"`
+                }else{
+                    string_to_return += `bg-white"`
+                }
+            }else{
+                string_to_return += `<select id="${place}-value" onchange="changed_value(this.value, ${place})" name="amount[]" class="px-2 bg-white h-10 rounded border border-black w-full">`
+                posts.forEach(element => {
+                    if(element.id == amount){
+                        string_to_return += `<option value="${element.id}" selected>${element.title}</option>`
+                    }else{
+                        string_to_return += `<option value="${element.id}">${element.title}</option>`
+                    }
+                });
+                string_to_return += `</select`
+            }
+
+            string_to_return += `> </td> <td class="text-sm font-light px-6 py-4 whitespace-nowrap"> <button class="px-2 w-full bg-white h-10 rounded border border-black hover:bg-red-600 hover:text-white pointer" onclick="delete_data(${place})">x</button> </td> </tr>`;
+
+            return string_to_return
+    }
+
+
+    function changed_type(new_type, key){
+        data[key] = {type_of_automation: new_type, amount: 0}
+        render_data()
+    }
+
+    function changed_value(amount, key){
+        data[key].amount = amount
+        render_data()
+    }
+    
+    function render_data(){
+        $("#container-data").empty()
+        data.forEach((element, key) => {
+            $("#container-data").append(element_generator(element.type_of_automation, element.amount, key))
+        });
+    }
+
+    function add_to_data(){
+        data.push({type_of_automation: "create_account", amount: 1})
+        render_data()
+    }
+
+    function delete_data(key){
+        data.splice(key, 1);
+        render_data()
+    }
+
+    render_data()
+</script>
+{{end}}

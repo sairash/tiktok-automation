@@ -1,0 +1,294 @@
+{{define "content"}}
+<section class="text-white">
+    <div class="mx-auto max-w-screen-xl px-4 py-4 lg:flex lg:h-screen">
+        <div class="h-full flex w-full">
+            {{include "user/sidebar"}}
+
+            <div class="flex flex-col w-full">
+                <div class="overflow-x-auto sm:mx-0.5 lg:mx-0.5">
+                    <div class="py-2 inline-block min-w-full sm:px-6 lg:px-8">
+                        <div class="overflow-hidden">
+                            <div
+                                class=" mt-3 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-6">
+                                <div
+                                    class="relative flex flex-grow !flex-row flex-col items-center rounded border border-gray-200 bg-clip-border shadow-md ">
+                                    <div class="flex w-auto flex-row items-center">
+                                        <div class="rounded-full bg-lightPrimary p-2">
+                                            <span class="flex items-center text-brand-500 ">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="flex w-auto flex-col justify-center pb-2">
+                                        <p class="font-dm text-sm font-medium text-gray-600">Total Views</p>
+                                        <h4 class="text-xl font-bold text-navy-700 text-center" id="total_views"></h4>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="relative flex flex-grow !flex-row flex-col items-center rounded border border-gray-200 bg-clip-border shadow-md ">
+                                    <div class="flex w-auto flex-row items-center">
+                                        <div class="rounded-full bg-lightPrimary p-2">
+                                            <span class="flex items-center text-brand-500 ">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="flex w-auto flex-col justify-center pb-2">
+                                        <p class="font-dm text-sm font-medium text-gray-600">Total Followers</p>
+                                        <h4 class="text-xl font-bold text-navy-700 text-center" id="total_followers"></h4>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="relative flex flex-grow !flex-row flex-col items-center rounded border border-gray-200 bg-clip-border shadow-md ">
+                                    <div class="flex w-auto flex-row items-center">
+                                        <div class="rounded-full bg-lightPrimary p-2">
+                                            <span class="flex items-center text-brand-500 ">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                                                </svg>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="flex w-auto flex-col justify-center pb-2">
+                                        <p class="font-dm text-sm font-medium text-gray-600">Total Likes</p>
+                                        <h4 class="text-xl font-bold text-navy-700 text-center" id="total_likes"></h4>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="text-sm  mt-3"> <span class="font-bold">{{.total_accounts_count}}</span> Total
+                                Accounts in this Section.</div>
+                            <div class="flex justify-between pb-5 mt-5">
+                                <div class="mt-1">
+                                    <input type="checkbox" id="select_all" name="select_all">
+                                    <label for="select_all" class="ml-2">Select All</label>
+                                </div>
+                                <div class="flex">
+                                    <div onclick="submit_form('/home/account/refresh')" class="cursor-pointer rounded-md bg-white hover:bg-blue-600 px-5 py-2.5 text-sm font-medium text-black hover:text-white shadow">
+                                        Refresh Info
+                                    </div>
+                                    <div onclick="submit_form('/home/account/automate')" class="cursor-pointer rounded-md bg-white hover:bg-blue-600 px-5 py-2.5 text-sm font-medium text-black hover:text-white shadow  ml-3.5">
+                                        Automate
+                                    </div>
+    
+                                    <div onclick="submit_form('/home/account/contain')" class="cursor-pointer rounded-md bg-white hover:bg-blue-600 px-5 py-2.5 text-sm font-medium text-black hover:text-white shadow ml-3.5">
+                                        Contain Account
+                                    </div>
+                                </div>
+
+                                
+                            </div>
+                            <table class="min-w-full">
+                                <thead class="bg-gray-800 border-b border-black">
+                                    <tr>
+                                        <th scope="col" class="text-sm font-medium px-6 py-4 text-left">
+                                        </th>
+                                        <th scope="col" class="text-sm font-medium px-6 py-4 text-left">
+                                            Screen Name
+                                        </th>
+                                        <th scope="col" class="text-sm font-medium px-6 py-4 text-left">
+                                            Email
+                                        </th>
+                                        <th scope="col" class="text-sm font-medium px-6 py-4 text-left">
+                                            Password
+                                        </th>
+                                        <th scope="col" class="text-sm font-medium px-6 py-4 text-left">
+                                            Account Info
+                                        </th>
+                                        <th scope="col" class="text-sm font-medium px-6 py-4 text-left max-w-20">
+                                            Action
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="mt-5">
+                                    {{range .accounts}}
+                                    <tr
+                                        class="border-b border-black transition duration-300 ease-in-out {{if .IsBanned}} bg-red-700 hover:bg-red-600{{else}} bg-gray-700 hover:bg-gray-600{{end}}">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <input type="checkbox" name="account" class="myCheckbox" value="{{.Id}}" id="">
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">@{{.ScreenName}}
+                                        </td>
+                                        <td class="text-sm font-light px-6 py-4 whitespace-nowrap">
+                                            {{.Email}}
+                                        </td>
+                                        <td class="text-sm font-light px-6 py-4 whitespace-nowrap">
+                                            {{.Password}}
+                                        </td>
+                                        <td class="text-sm font-light px-6 py-4 whitespace-nowrap">
+                                            <div class="flex">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mt-0.5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                                <div class="ml-1 font-bold views">{{.TotalViews}}</div>
+                                            </div>
+                                            <div class="flex">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mt-0.5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                                </svg>
+                                                <div class="ml-1 font-bold followers">{{.Followers}}</div>
+                                            </div>
+                                            <div class="flex">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mt-0.5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                                                </svg>
+                                                <div class="ml-1 font-bold likes">{{.TotalLikes}}</div>
+                                            </div>
+                                        </td>
+                                        <td class="flex font-light px-6 py-4 whitespace-nowrap">
+                                            <a href="https://tiktok.com/@{{.ScreenName}}" class="p-2 rounded bg-green-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="w5 h-5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                                                </svg>
+                                            </a>
+                                            <a href="/home/account/clear/{{.Id}}" class="p-2 rounded bg-red-500 ml-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                                                </svg>
+                                            </a>
+                                            <a href="/home/tiktok/posts/{{.ScreenName}}/{{.Id}}" class="p-2 rounded bg-blue-500 ml-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                                  </svg>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script>
+    var selected_users_array = []
+    $(document).ready(function () {
+        var totalViews = 0;
+        var totalFollowers = 0;
+        var totalLikes = 0;
+        $('.views').each(function () {
+            totalViews += parseInt($(this).text(), 10);
+        });
+        $('.followers').each(function () {
+            totalFollowers += parseInt($(this).text());
+        });
+        $('.likes').each(function () {
+            totalLikes += parseInt($(this).text(), 10);
+        });
+
+        $("#total_views").text(totalViews)
+        $("#total_followers").text(totalFollowers)
+        $("#total_likes").text(totalLikes)
+
+
+        $('.myCheckbox').change(function() {
+            var isChecked = $(this).is(':checked');
+            var value = $(this).val();
+            
+            if (isChecked) {
+                selected_users_array.push(value)
+            } else {
+                selected_users_array = selected_users_array.filter(item => item !== value);
+            }
+
+        });
+
+        $('#select_all').change(function() {
+            var isChecked = $(this).is(':checked');
+            selected_users_array = []
+            if (isChecked) {
+                $('.myCheckbox').each(function () {
+                    selected_users_array.push($(this).val())
+                })
+            }
+            render_select()
+        });
+    });
+
+    function render_select() {
+        $('.myCheckbox').each(function () {
+            if (selected_users_array.includes($(this).val())){
+                $(this).prop('checked', true);
+            }else{
+                $(this).prop('checked', false);
+            }
+        })
+    }
+
+    function submit_form(url) {
+        if( selected_users_array.length > 0){
+            var form = $('<form>');
+            form.css('display', 'none');
+            form.attr('action', url); 
+            form.attr('method', 'post');
+    
+            
+            var inputField = $('<input>', {
+                type: 'text',
+                name: 'user_ids',
+                value: selected_users_array.join(",")
+            });
+            // var inputField2 = $('<input>', {
+            //     type: 'text',
+            //     name: 'sub_info',
+            //     value: 'disposable'
+            // });
+
+            var inputField3 = $('<input>', {
+                type: 'text',
+                name: 'type_of_account',
+                value: 'disposable'
+            });
+    
+            
+            form.append(inputField);
+            form.append(inputField3);
+    
+            
+            $('body').append(form);
+    
+            
+            form.submit();
+            form.remove();
+        }else{
+            Toastify({
+
+                text: "Please select the accounts before doing some actions.",
+
+                duration: 3000,
+                gravity: "bottom",
+                backgroundColor: "red"
+
+            }).showToast();
+        }
+    }
+
+</script>
+{{end}}

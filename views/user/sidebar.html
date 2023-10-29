@@ -1,0 +1,15 @@
+<div class="h-full w-64 border-r border-black pt-10 px-5">
+    {{range  $value := .body}}
+        {{if .is_text}}
+            <p class="mt-5 text-xs font-medium text-gray-400">{{$value.text}}</p> 
+        {{else}}
+            <a href='{{$value.url}}' class="mt-2 py-1.5 text-sm font-medium {{if $value.is_active}} text-blue-500 {{else}} text-slate-400 mr-4 hover:text-blue-500 {{end}} cursor-pointer flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5   mr-4  stroke-blue-500" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    {{$value.svg}}
+                </svg>
+                {{$value.text}}
+            </a>
+        {{end}}
+    {{end}}
+</div>

@@ -1,0 +1,33 @@
+<!doctype html>
+
+<html>
+    <head>
+        <meta charset = "utf-8" />
+        <title>{{.title}}</title>
+        <link rel="icon" href="/favicon.ico" >
+        <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.0.1/dist/tailwind.min.css">
+        <style>
+            .w-90 {
+                width: 100%;
+                width: 500px;
+            }
+    
+            .search_width {
+                width: 100%;
+                max-width: 700px;
+            }
+            .active{
+                border-color: #ff3030;
+                color: #ff3030;
+            }
+            .bg-footer {
+                background: #f2f2f2;
+            }
+        </style>
+    </head>
+
+    <body class="bg-gray-900">
+        {{include "layouts/header"}}
+        {{template "content" .}}
+    </body>
+</html>
