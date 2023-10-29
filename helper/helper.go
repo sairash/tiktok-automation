@@ -622,7 +622,7 @@ func GetDevices() RegisterDeviceResponse {
 
 	req, _ := http.NewRequest("GET", url, nil)
 
-	req.Header.Add("X-RapidAPI-Key", "79dcf8e17emsh42d569b2c0f3329p167a69jsn9d8404bac65a")
+	req.Header.Add("X-RapidAPI-Key", EnvVariable("RAPID_API_TOKEN_KEY"))
 	req.Header.Add("X-RapidAPI-Host", "tiktok-video-no-watermark2.p.rapidapi.com")
 
 	res, err := http.DefaultClient.Do(req)
