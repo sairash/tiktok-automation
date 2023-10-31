@@ -98,6 +98,14 @@
             }else{
                 string_to_return += `<option value="repeat"> Repeat </option>`
             }
+            
+            if(type_of_automation == "delete_posts"){
+                string_to_return += `<option selected value="delete_posts"> Delete All Posts </option>`
+                edit_value = false
+            }else{
+                string_to_return += `<option value="delete_posts"> Delete All Posts </option>`
+            }
+            
             string_to_return += `</select></td>
             <td class="text-sm font-light px-6 py-4 whitespace-nowrap">  `;
 

@@ -23,6 +23,7 @@ func Api(e *echo.Echo) {
 	e.GET("/home/account/clear/:id", accountController.ClearAccount)
 	e.POST("/home/account/contain", accountController.ContainedAccount)
 	e.POST("/home/account/automate", accountController.AutomateDisplay)
+	e.GET("/home/tiktok/post/delete/:tiktok_id/:id/:postid", accountController.RemovePost)
 
 	g := e.Group("/user")
 	// g.GET("/", hello_api)

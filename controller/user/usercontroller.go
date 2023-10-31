@@ -196,8 +196,6 @@ func CreateAutomation(c echo.Context) error {
 		return helper.ErrorResponse(c, "Error Validation", nil)
 	}
 
-	fmt.Println(request)
-
 	if err = automation.GenerateAutomationLog(request.TypeOfAutomation, request.Amount, user.Id); err != nil {
 		return c.Render(http.StatusOK, "404", helper.PageDataCreator(c, "Chito Tiktok", "Error!", "Automation Not Created!", err.Error(), "/home/automation/create", false, 0))
 	}

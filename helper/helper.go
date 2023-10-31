@@ -314,8 +314,6 @@ func JWT(c echo.Context) (UserJwtClaims, error) {
 
 	tokenString := cookie.Value
 
-	fmt.Println(tokenString)
-
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -331,8 +329,6 @@ func JWT(c echo.Context) (UserJwtClaims, error) {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-
-	fmt.Println(claims["token"].(string))
 
 	return UserJwtClaims{
 		Token: claims["token"].(string),
@@ -589,8 +585,6 @@ func IsAccBanned(screen_name string) (map[string][]int, bool) {
 	})
 
 	c.Visit(url)
-
-	fmt.Println(mep)
 
 	if len(mep) < 1 {
 		return mep, true

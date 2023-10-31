@@ -113,11 +113,11 @@ func main() {
 
 		helper.Database.Db.Preload("Post").Find(&posts, "account_id = ?", id)
 
-		fmt.Println()
 		extra_value := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
 		extra_value["body"] = helper.UserSidebar("")
 		extra_value["posts"] = posts
 		extra_value["ScreenName"] = screenName
+		extra_value["id"] = id
 
 		return c.Render(http.StatusOK, "user/post", extra_value)
 	})
@@ -131,7 +131,6 @@ func main() {
 
 		user := models.User{}
 		helper.Database.Db.Preload("Posts").First(&user, "token = ?", user_claims.Token)
-		fmt.Println(user)
 
 		extra_value := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
 		extra_value["body"] = helper.UserSidebar("/home/posts")
@@ -194,7 +193,6 @@ func main() {
 		extra_value := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
 		extra_value["body"] = helper.UserSidebar("/home/automations")
 		extra_value["automations"] = automation.GetUserAutomation(user.Id)
-		fmt.Println(extra_value["automations"])
 		return c.Render(http.StatusOK, "user/automation/index", extra_value)
 	})
 
@@ -251,7 +249,6 @@ func main() {
 		send_data := helper.PageDataCreator(c, "Chito Tiktok", "404", "", "It looks like you are lost.. Want to go back?", "/", true, 1)
 
 		users := user.GetAnyVerifiedUsers(1)
-		fmt.Println(users)
 		send_data["users"] = users
 		return c.Render(http.StatusOK, "admin/verified", send_data)
 	})

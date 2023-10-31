@@ -46,10 +46,7 @@ func createNewDevice() models.Device {
 
 	helper.Database.Db.Where("d_id = ? AND i_id = ?", new_device.Data.DeviceId, new_device.Data.InstallId).Find(&device)
 
-	fmt.Println(device)
-
 	if device.Id != 0 {
-		fmt.Println("Already Exists!")
 		// return createNewDevice()
 	}
 
@@ -76,7 +73,6 @@ func (ss *SafeDevice) addToDeviceInUse(user_id uint) {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 	ss.device = append(ss.device, user_id)
-	fmt.Println(ss.device)
 }
 
 func (ss *SafeDevice) removeFromDeviceInUse(user_id uint) {
@@ -89,7 +85,6 @@ func (ss *SafeDevice) removeFromDeviceInUse(user_id uint) {
 		}
 	}
 	ss.device = result
-	fmt.Println(ss.device)
 }
 
 type ErrorResponse struct {
@@ -108,7 +103,6 @@ func createAccountHelper(user_id uint, amount int) uint {
 	} else {
 		helper.Database.Db.Select("id", "device_info", "blocked").Where("blocked = 0").First(&device)
 	}
-	fmt.Println(device)
 	if device.Id == 0 {
 		device = createNewDevice()
 	}
@@ -116,7 +110,6 @@ func createAccountHelper(user_id uint, amount int) uint {
 	go devices_in_use.addToDeviceInUse(device.Id)
 
 	url := url_generator("register")
-	fmt.Println(url)
 	jsonBody := []byte(fmt.Sprintf(`{"device_data": "%s"}`, device.DeviceInfo))
 
 	bodyReader := bytes.NewReader(jsonBody)
@@ -183,6 +176,11 @@ func CreateAccount(amount int, user_id uint, automation_key string) {
 	account_ids := []uint{}
 	for i < amount {
 		i++
+		_, ok := AutomationLogMap.Get(automation_key)
+
+		if !ok {
+			return
+		}
 
 		new_account := createAccountHelper(user_id, 0)
 		if new_account == 0 {
@@ -201,7 +199,6 @@ func upload(session, tiktok_user_id, type_of_post, post_id, path, desc, music st
 	} else {
 		helper.Database.Db.Select("id", "device_info", "blocked").Where("blocked = 0").First(&device)
 	}
-	fmt.Println(device)
 	if device.Id == 0 {
 		device = createNewDevice()
 	}
@@ -272,6 +269,11 @@ func PostToTikTok(post_id int, user_id uint, account_ids []uint, automation_key 
 	helper.Database.Db.Where("id = ?", post_id).First(&post)
 
 	for _, account := range accounts {
+		_, ok := AutomationLogMap.Get(automation_key)
+
+		if !ok {
+			return
+		}
 		helper.Database.Db.Create(&models.AccountPost{
 			UserId:    user_id,
 			PostID:    post.Id,
@@ -285,8 +287,6 @@ func PostToTikTok(post_id int, user_id uint, account_ids []uint, automation_key 
 func CheckBanned(tik_user_id string, account_id uint, posts []models.AccountPost) bool {
 	mep, banned := helper.IsAccBanned(tik_user_id)
 
-	fmt.Println(mep)
-
 	if banned {
 		helper.Database.Db.Model(&models.Account{}).Where("tik_user_id = ?", tik_user_id).Update("is_banned", true)
 		return true
@@ -296,16 +296,12 @@ func CheckBanned(tik_user_id string, account_id uint, posts []models.AccountPost
 	post_len := len(posts) - 1
 	for key, num := range mep["video-views"] {
 		if key <= post_len {
-			fmt.Println("Error Here")
 			helper.Database.Db.Model(&models.AccountPost{}).Where("id = ?", posts[key].Id).Update("total_views", num)
-			fmt.Println("No Error Here")
 		}
 		sum += num
 	}
 
-	fmt.Println("Error Here 1")
 	helper.Database.Db.Model(&models.Account{}).Where("id = ?", account_id).Update("total_likes", mep["likes-count"][0]).Update("total_views", sum).Update("followers", mep["followers-count"][0])
-	fmt.Println("No Error Here 1")
 
 	return false
 }
@@ -313,8 +309,6 @@ func CheckBanned(tik_user_id string, account_id uint, posts []models.AccountPost
 func RefreshAccountValue(tik_user_id, post_id string, account_id uint, posts []models.AccountPost) {
 	if !CheckBanned(tik_user_id, account_id, posts) {
 		mep := helper.GetVideoData(tik_user_id, post_id)
-		fmt.Println(mep)
-		fmt.Println("Error Here 2")
 		if mep["like-count"] != nil {
 			helper.Database.Db.Model(&models.AccountPost{}).Where("tik_id = ?", post_id).Update("total_likes", mep["like-count"][0])
 		}
@@ -327,11 +321,15 @@ func ClearAccount(account_ids []uint, key string) {
 	RemoveUserIdTOOtherEvents(account_ids, key)
 }
 
-func RefreshAccount(accounts_uids []uint) {
+func RefreshAccount(accounts_uids []uint, automation_key string) {
 	accounts := []models.Account{}
 	helper.Database.Db.Select("id", "tik_user_id").Where("id IN ?", accounts_uids).Find(&accounts)
-	fmt.Println(accounts)
 	for _, account := range accounts {
+		_, ok := AutomationLogMap.Get(automation_key)
+
+		if !ok {
+			return
+		}
 		posts := []models.AccountPost{}
 		helper.Database.Db.Order("id desc").Select("id", "tik_id").Where("account_id = ?", account.Id).Find(&posts)
 
@@ -340,4 +338,82 @@ func RefreshAccount(accounts_uids []uint) {
 		}
 
 	}
+}
+
+func DeletePost(account_session, post_id string, amount, total_likes, total_views, post_likes, post_views int) (int, int) {
+
+	device := models.Device{}
+	if len(devices_in_use.device) > 0 {
+		helper.Database.Db.Select("id", "device_info", "blocked").Where("id NOT IN (?) AND blocked = 0", devices_in_use.device).First(&device)
+	} else {
+		helper.Database.Db.Select("id", "device_info", "blocked").Where("blocked = 0").First(&device)
+	}
+	if device.Id == 0 {
+		device = createNewDevice()
+	}
+
+	go devices_in_use.addToDeviceInUse(device.Id)
+
+	url := url_generator("delete")
+
+	jsonBody := []byte(fmt.Sprintf(`{"session_id":"%s", "video_id":"%s", "device_data": "%s"}`, account_session, post_id, device.DeviceInfo))
+
+	bodyReader := bytes.NewReader(jsonBody)
+
+	req, err := http.NewRequest(http.MethodPost, url, bodyReader)
+	if err != nil {
+		fmt.Printf("client: could not create request: %s\n", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := http.Client{
+		Timeout: 30 * time.Minute,
+	}
+
+	res, err := client.Do(req)
+	devices_in_use.removeFromDeviceInUse(device.Id)
+	if err != nil {
+		return total_likes, total_views
+	}
+
+	if res.StatusCode != http.StatusOK {
+		fmt.Printf("Error:  %e\n", err)
+		if amount >= 2 {
+			return total_likes, total_views
+		}
+		return DeletePost(account_session, post_id, amount+1, total_likes, total_views, post_likes, post_views)
+	}
+	helper.Database.Db.Delete(&models.AccountPost{}, "tik_id = ?", post_id)
+	return total_likes - post_likes, total_views - post_views
+}
+
+func delete_all_posts(user_ids []uint, automation_key string) {
+
+	accounts := []models.Account{}
+	helper.Database.Db.Select("id", "session", "total_views", "total_likes").Where("id IN ?", user_ids).Find(&accounts)
+	for _, account := range accounts {
+		total_likes := account.TotalLikes
+		total_views := account.TotalViews
+
+		_, ok := AutomationLogMap.Get(automation_key)
+
+		if !ok {
+			return
+		}
+		posts := []models.AccountPost{}
+		helper.Database.Db.Select("id", "tik_id", "total_views", "total_likes").Where("account_id = ?", account.Id).Find(&posts)
+
+		for _, post := range posts {
+			total_views, total_likes = DeletePost(account.Session, post.TikId, 0, total_likes, total_views, post.TotalViews, post.TotalLikes)
+		}
+
+		if account.TotalLikes != total_likes || account.TotalViews != total_views {
+			helper.Database.Db.Where("id = ?", account.Id).Updates(&models.Account{
+				TotalViews: total_views,
+				TotalLikes: total_likes,
+			})
+		}
+
+	}
+
 }

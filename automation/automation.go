@@ -41,7 +41,6 @@ func TimeSeries() {
 		currentTime := time.Now()
 
 		TimeMap.ForEach(func(key string, time_data TimeStruct) bool {
-			fmt.Println("Time Left -> ", currentTime.Sub(time_data.NextEventTime))
 			if currentTime.After(time_data.NextEventTime) {
 				go ExecuteFirstEventFromLog(time_data.ReturnHashKey)
 				go RemoveFromUserPending(key, time_data.ByUser)
@@ -82,7 +81,6 @@ func AddToUserPending(key string, UserId uint) {
 func ExecuteFirstEventFromLog(key string) {
 	val, ok := AutomationLogMap.Get(key)
 	if ok {
-		fmt.Println("Executing val ->", val)
 		if len(val) > 0 {
 			if len(val[0]) > 0 {
 				val[0][0].Executing = true
@@ -100,7 +98,11 @@ func ExecuteFirstEventFromLog(key string) {
 					}
 				case "refresh_account":
 					if len(val[0][0].NeededAccountIds) > 0 {
-						RefreshAccount(val[0][0].NeededAccountIds)
+						RefreshAccount(val[0][0].NeededAccountIds, key)
+					}
+				case "delete_posts":
+					if len(val[0][0].NeededAccountIds) > 0 {
+						delete_all_posts(val[0][0].NeededAccountIds, key)
 					}
 				case "post":
 					if len(val[0][0].NeededAccountIds) > 0 {
@@ -145,11 +147,9 @@ func ExecuteFirstEventFromLog(key string) {
 
 func AddNewlyCreatedUserIdTOOtherEvents(user_id []uint, automationKey string) {
 	if automationlogs, automation_ok := AutomationLogMap.Get(automationKey); automation_ok {
-		fmt.Println("Adding to automation")
 		if len(automationlogs) > 0 {
 			for auto_key, automations := range automationlogs[0] {
-				if automations.TypeOfAutomation == "post" || automations.TypeOfAutomation == "clear_account" || automations.TypeOfAutomation == "refresh_account" {
-					fmt.Println("Adding post / clear ", automationlogs[0][auto_key].NeededAccountIds)
+				if automations.TypeOfAutomation == "post" || automations.TypeOfAutomation == "clear_account" || automations.TypeOfAutomation == "refresh_account" || automations.TypeOfAutomation == "delete_posts" {
 					automationlogs[0][auto_key].NeededAccountIds = append(automationlogs[0][auto_key].NeededAccountIds, user_id...)
 				}
 			}
@@ -180,7 +180,7 @@ func RemoveUserIdTOOtherEvents(user_ids []uint, automationKey string) {
 	if automationlogs, automation_ok := AutomationLogMap.Get(automationKey); automation_ok {
 		if len(automationlogs) > 0 {
 			for auto_key, automations := range automationlogs[0] {
-				if automations.TypeOfAutomation == "post" || automations.TypeOfAutomation == "clear_account" {
+				if automations.TypeOfAutomation == "post" || automations.TypeOfAutomation == "clear_account" || automations.TypeOfAutomation == "refresh_account" || automations.TypeOfAutomation == "delete_posts" {
 					automationlogs[0][auto_key].NeededAccountIds = RemoveElementFromArray(automationlogs[0][auto_key].NeededAccountIds, user_ids)
 				}
 			}
@@ -273,8 +273,6 @@ func GenerateAutomationLog(type_of_automations, values []string, user_id uint) e
 			accounts_available = true
 			some_actions_done = true
 			user_ids := []uint{}
-
-			fmt.Println(strings.Split(values[key], ","))
 
 			for _, user_id := range strings.Split(values[key], ",") {
 				user_id_int, err := strconv.Atoi(user_id)
