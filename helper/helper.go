@@ -574,7 +574,7 @@ func UserSidebar(url string) []echo.Map {
 func IsAccBanned(screen_name string) (map[string][]int, bool) {
 	url := "https://www.tiktok.com/@" + screen_name
 	c := colly.NewCollector()
-	c.SetProxy("http://brd-customer-hl_1a3ab2f7-zone-ispproxy:unz9l48239vv@brd.superproxy.io:22225")
+	c.SetProxy(EnvVariable("proxy"))
 
 	mep := make(map[string][]int)
 	c.OnHTML("strong", func(e *colly.HTMLElement) {
@@ -582,6 +582,10 @@ func IsAccBanned(screen_name string) (map[string][]int, bool) {
 		if err == nil {
 			mep[e.Attr("data-e2e")] = append(mep[e.Attr("data-e2e")], value)
 		}
+	})
+
+	c.OnError(func(r *colly.Response, err error) {
+		fmt.Println("Request URL:", r.Request.URL, "failed with response:", r, "\nError:", err)
 	})
 
 	c.Visit(url)
@@ -596,7 +600,7 @@ func IsAccBanned(screen_name string) (map[string][]int, bool) {
 func GetVideoData(screen_name string, post_id string) map[string][]int {
 	url := "https://www.tiktok.com/@" + screen_name + "/video/" + post_id
 	c := colly.NewCollector()
-	c.SetProxy("http://brd-customer-hl_1a3ab2f7-zone-ispproxy:unz9l48239vv@brd.superproxy.io:22225")
+	c.SetProxy(EnvVariable("proxy"))
 
 	mep := make(map[string][]int)
 	c.OnHTML("strong", func(e *colly.HTMLElement) {
@@ -606,6 +610,9 @@ func GetVideoData(screen_name string, post_id string) map[string][]int {
 		}
 	})
 
+	c.OnError(func(r *colly.Response, err error) {
+		fmt.Println("Request URL:", r.Request.URL, "failed with response:", r, "\nError:", err)
+	})
 	c.Visit(url)
 
 	return mep
