@@ -55,7 +55,9 @@ func Login(c echo.Context) error {
 	}
 
 	if user.Verified != 1 {
-		return c.Render(http.StatusOK, "404", helper.PageDataCreator(c, "Chito Tiktok", "Signup Successful!", "What to do?", "Wait for the account to be approved by admin!", "/", false, 0))
+		site_data, _, _ := helper.PageDataCreator(c, "Chito Tiktok", "Signup Successful!", "What to do?", "Wait for the account to be approved by admin!", "/", false, 0)
+
+		return c.Render(http.StatusOK, "404", site_data)
 	}
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
 	if err != nil {
@@ -141,7 +143,9 @@ func Signup(c echo.Context) error {
 
 	models.CreateUser(&new_user, helper.Database.Db)
 
-	return c.Render(http.StatusOK, "404", helper.PageDataCreator(c, "Chito Tiktok", "Signup Successful!", "What to do?", "Wait for the account to be approved by admin!", "/", false, 0))
+	site_data, _, _ := helper.PageDataCreator(c, "Chito Tiktok", "Signup Successful!", "What to do?", "Wait for the account to be approved by admin!", "/", false, 0)
+
+	return c.Render(http.StatusOK, "404", site_data)
 }
 
 func Accept(c echo.Context) error {
@@ -197,7 +201,8 @@ func CreateAutomation(c echo.Context) error {
 	}
 
 	if err = automation.GenerateAutomationLog(request.TypeOfAutomation, request.Amount, user.Id); err != nil {
-		return c.Render(http.StatusOK, "404", helper.PageDataCreator(c, "Chito Tiktok", "Error!", "Automation Not Created!", err.Error(), "/home/automation/create", false, 0))
+
+		return c.Redirect(http.StatusSeeOther, "/404")
 	}
 
 	return c.Redirect(http.StatusSeeOther, "/home/automations")

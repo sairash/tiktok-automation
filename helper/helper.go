@@ -471,7 +471,7 @@ func MakeDir(path string) error {
 
 }
 
-func PageDataCreator(c echo.Context, title, header, body, sub_body, link string, show_app_bar bool, role int) echo.Map {
+func PageDataCreator(c echo.Context, title, header, body, sub_body, link string, show_app_bar bool, role int) (echo.Map, uint, error) {
 	page_data := echo.Map{
 		"title":          title,
 		"info":           header,
@@ -482,16 +482,26 @@ func PageDataCreator(c echo.Context, title, header, body, sub_body, link string,
 	}
 	page_header := echo.Map{}
 
+	user_id := uint(0)
 	if show_app_bar {
-		if role == 0 {
-			user_claims, err := JWT(c)
+		user_claims, err := JWT(c)
 
-			if err != nil {
-				role = 0
-			} else {
-				role = user_claims.Role
-			}
+		if err != nil {
+			role = 0
+		} else {
+			role = user_claims.Role
 		}
+		user := models.User{}
+		Database.Db.Preload("Notifications", func(db *gorm.DB) *gorm.DB {
+			return db.Where("seen = ?", false)
+		}).Where("token = ?", user_claims.Token).First(&user)
+
+		if user.Id == 0 {
+			return nil, user_id, fmt.Errorf("Error User")
+		}
+
+		user_id = user.Id
+		page_header["notification_count"] = int64(len(user.Notifications))
 
 		if role == 0 {
 			page_header["buttons"] = map[string]string{
@@ -513,7 +523,7 @@ func PageDataCreator(c echo.Context, title, header, body, sub_body, link string,
 
 	page_data["header"] = page_header
 
-	return page_data
+	return page_data, user_id, nil
 }
 
 func UserSidebar(url string) []echo.Map {
@@ -534,6 +544,25 @@ func UserSidebar(url string) []echo.Map {
 			"is_text":   false,
 			"url":       "/home/contained",
 			"svg":       template.HTML(`<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />`),
+			"is_active": false,
+		},
+		{
+			"text":    "Extra",
+			"is_text": true,
+		},
+		{
+			"text":      "All Proxies",
+			"is_text":   false,
+			"url":       "/home/proxies",
+			"svg":       template.HTML(`<path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" /> `),
+			"is_active": false,
+		},
+		{
+			"text":    "All Names",
+			"is_text": false,
+			"url":     "/home/names",
+			"svg": template.HTML(`<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+		  `),
 			"is_active": false,
 		},
 		{
@@ -659,4 +688,50 @@ func MinMaxPorts(key string) int {
 	}
 
 	return port
+}
+
+func CheckProxyWorking(proxy_url string, proxy_id, user_id uint, send_to_notification bool) bool {
+	url := "https://ip.smartproxy.com/"
+	c := colly.NewCollector()
+	c.SetProxy(proxy_url)
+
+	working := false
+
+	c.OnHTML("body", func(e *colly.HTMLElement) {
+		fmt.Println(e.Text)
+		working = true
+	})
+
+	c.OnError(func(r *colly.Response, err error) {
+		fmt.Println("Request URL:", r.Request.URL, "failed with response:", r, "\nError:", err)
+	})
+
+	c.Visit(url)
+
+	Database.Db.Model(&models.Proxy{}).Where("id = ?", proxy_id).Update("not_working", !working)
+	if send_to_notification && !working {
+		Database.Db.Create(&models.Notification{
+			Message: "Your Proxy " + proxy_url + " is not working!",
+			Seen:    false,
+			UserId:  user_id,
+		})
+	}
+
+	return working
+}
+
+func GetWorkingProxy(user_id uint) string {
+	proxies := []models.Proxy{}
+
+	Database.Db.Where("user_id = ? And not_working = ?", user_id, false).Find(&proxies)
+
+	rand.Shuffle(len(proxies), func(i, j int) { proxies[i], proxies[j] = proxies[j], proxies[i] })
+
+	for _, proxy := range proxies {
+		if CheckProxyWorking(proxy.Url, proxy.Id, user_id, true) {
+			return proxy.Url
+		}
+	}
+
+	return EnvVariable("proxy")
 }

@@ -7,7 +7,6 @@ import (
 	"beepbop/helper"
 	"beepbop/models"
 	"beepbop/router"
-	"fmt"
 	"time"
 
 	"net/http"
@@ -58,37 +57,41 @@ func main() {
 	e.File("/favicon.ico", "assets/favicon.ico")
 
 	e.GET("/", func(c echo.Context) error {
-		return c.Render(http.StatusOK, "index", helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 0))
+		site_data, _, _ := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 0)
+
+		return c.Render(http.StatusOK, "index", site_data)
 	})
 
 	e.GET("/signin", func(c echo.Context) error {
-		return c.Render(http.StatusOK, "sign_in", helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 0))
+		site_data, _, _ := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 0)
+		return c.Render(http.StatusOK, "sign_in", site_data)
 	})
 
 	e.GET("/signup", func(c echo.Context) error {
-		return c.Render(http.StatusOK, "sign_up", helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 0))
+		site_data, _, _ := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 0)
+
+		return c.Render(http.StatusOK, "sign_up", site_data)
 	})
 
 	e.GET("/404", func(c echo.Context) error {
+		site_data, _, _ := helper.PageDataCreator(c, "Chito Tiktok", "404", "", "It looks like you are lost.. Want to go back?", "/", false, 0)
+
 		return c.Render(http.StatusOK, "404",
-			helper.PageDataCreator(c, "Chito Tiktok", "404", "", "It looks like you are lost.. Want to go back?", "/", false, 0))
+			site_data)
 	})
 
 	e.GET("/home", func(c echo.Context) error {
-		user_claims, err := helper.JWT(c)
 
-		if err != nil || user_claims.Role != 2 {
-			c.Redirect(http.StatusSeeOther, "/404")
+		extra_value, user_id, err := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
+		if err != nil {
+			c.Redirect(http.StatusSeeOther, "/logout")
 		}
-
 		var accounts []models.Account
-
 		helper.Database.Db.Table("accounts").Joins("INNER JOIN users ON accounts.user_id = users.id").
-			Where("users.token = ? And accounts.type_of_account = ? And accounts.cleared = 0", user_claims.Token, "disposable").
+			Where("users.id = ? And accounts.type_of_account = ? And accounts.cleared = 0", user_id, "disposable").
 			Select("accounts.*").
 			Find(&accounts)
 
-		extra_value := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
 		extra_value["body"] = helper.UserSidebar("/home")
 		extra_value["accounts"] = accounts
 		extra_value["total_accounts_count"] = len(accounts)
@@ -100,12 +103,10 @@ func main() {
 	})
 
 	e.GET("/home/tiktok/posts/:screenName/:id", func(c echo.Context) error {
-		user_claims, err := helper.JWT(c)
-
-		if err != nil || user_claims.Role != 2 {
-			c.Redirect(http.StatusSeeOther, "/404")
+		extra_value, _, err := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
+		if err != nil {
+			c.Redirect(http.StatusSeeOther, "/logout")
 		}
-
 		id := c.Param("id")
 		screenName := c.Param("screenName")
 
@@ -113,7 +114,6 @@ func main() {
 
 		helper.Database.Db.Preload("Post").Find(&posts, "account_id = ?", id)
 
-		extra_value := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
 		extra_value["body"] = helper.UserSidebar("")
 		extra_value["posts"] = posts
 		extra_value["ScreenName"] = screenName
@@ -123,50 +123,86 @@ func main() {
 	})
 
 	e.GET("/home/posts", func(c echo.Context) error {
-		user_claims, err := helper.JWT(c)
 
-		if err != nil || user_claims.Role != 2 {
-			c.Redirect(http.StatusSeeOther, "/404")
+		extra_value, user_id, err := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
+		if err != nil {
+			c.Redirect(http.StatusSeeOther, "/logout")
 		}
 
 		user := models.User{}
-		helper.Database.Db.Preload("Posts").First(&user, "token = ?", user_claims.Token)
+		helper.Database.Db.Preload("Posts").First(&user, "id = ?", user_id)
 
-		extra_value := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
 		extra_value["body"] = helper.UserSidebar("/home/posts")
 		extra_value["posts"] = user.Posts
 		return c.Render(http.StatusOK, "user/posts/all", extra_value)
 	})
 
 	e.GET("/home/posts/create", func(c echo.Context) error {
-		user_claims, err := helper.JWT(c)
-
-		if err != nil || user_claims.Role != 2 {
-			c.Redirect(http.StatusSeeOther, "/404")
+		extra_value, _, err := helper.PageDataCreator(c, "Create Post", "", "", "", "", true, 2)
+		if err != nil {
+			c.Redirect(http.StatusSeeOther, "/logout")
 		}
-
-		extra_value := helper.PageDataCreator(c, "Create Post", "", "", "", "", true, 2)
 		extra_value["body"] = helper.UserSidebar("/home/posts")
 
 		// posts := post.GetStoredPost(1)
 		return c.Render(http.StatusOK, "user/posts/create", extra_value)
 	})
 
-	e.GET("/home/contained", func(c echo.Context) error {
-		user_claims, err := helper.JWT(c)
-
-		if err != nil || user_claims.Role != 2 {
-			c.Redirect(http.StatusSeeOther, "/404")
+	e.GET("/home/names", func(c echo.Context) error {
+		extra_value, user_id, err := helper.PageDataCreator(c, "Names", "", "", "", "", true, 2)
+		if err != nil {
+			c.Redirect(http.StatusSeeOther, "/logout")
 		}
+		extra_value["body"] = helper.UserSidebar("/home/names")
 
-		var accounts []models.Account
+		names := []models.Name{}
+		helper.Database.Db.Where("user_id = ?", user_id).Find(&names)
+		extra_value["names"] = names
 
+		return c.Render(http.StatusOK, "user/name", extra_value)
+	})
+
+	e.GET("/home/notification", func(c echo.Context) error {
+		extra_value, user_id, err := helper.PageDataCreator(c, "Names", "", "", "", "", true, 2)
+		if err != nil {
+			c.Redirect(http.StatusSeeOther, "/logout")
+		}
+		extra_value["body"] = helper.UserSidebar("/home/notification")
+
+		notifications := []models.Notification{}
+		helper.Database.Db.Where("user_id = ?", user_id).Find(&notifications)
+		helper.Database.Db.Model(&models.Notification{}).Where("seen = ? AND user_id = ?", false, user_id).Update("seen", true)
+		extra_value["notifications"] = notifications
+
+		return c.Render(http.StatusOK, "user/notification", extra_value)
+	})
+
+	e.GET("/home/proxies", func(c echo.Context) error {
+
+		extra_value, user_id, err := helper.PageDataCreator(c, "Proxy", "", "", "", "", true, 2)
+		if err != nil {
+			c.Redirect(http.StatusSeeOther, "/logout")
+		}
+		extra_value["body"] = helper.UserSidebar("/home/proxies")
+
+		names := []models.Proxy{}
+		helper.Database.Db.Where("user_id = ?", user_id).Find(&names)
+		extra_value["proxies"] = names
+
+		return c.Render(http.StatusOK, "user/proxy", extra_value)
+	})
+
+	e.GET("/home/contained", func(c echo.Context) error {
+
+		extra_value, user_id, err := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
+		if err != nil {
+			c.Redirect(http.StatusSeeOther, "/logout")
+		}
+		accounts := []models.Account{}
 		helper.Database.Db.Table("accounts").Joins("INNER JOIN users ON accounts.user_id = users.id").
-			Where("users.token = ? And accounts.type_of_account = ? And accounts.cleared = 0", user_claims.Token, "contained").
+			Where("users.id = ? And accounts.type_of_account = ? And accounts.cleared = 0", user_id, "contained").
 			Select("accounts.*").
 			Find(&accounts)
-
-		extra_value := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
 		extra_value["body"] = helper.UserSidebar("/home/contained")
 		extra_value["accounts"] = accounts
 		extra_value["total_accounts_count"] = len(accounts)
@@ -178,38 +214,29 @@ func main() {
 	})
 
 	e.GET("/home/automations", func(c echo.Context) error {
-		user_claims, err := helper.JWT(c)
 
-		if err != nil || user_claims.Role != 2 {
-			c.Redirect(http.StatusSeeOther, "/404")
+		extra_value, user_id, err := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
+		if err != nil {
+			c.Redirect(http.StatusSeeOther, "/logout")
 		}
-
-		user := models.User{}
-
-		helper.Database.Db.Select("id").Where("token = ?", user_claims.Token).Find(&user)
-
-		fmt.Print(user.Id)
-
-		extra_value := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
 		extra_value["body"] = helper.UserSidebar("/home/automations")
-		extra_value["automations"] = automation.GetUserAutomation(user.Id)
+		extra_value["automations"] = automation.GetUserAutomation(user_id)
 		return c.Render(http.StatusOK, "user/automation/index", extra_value)
 	})
 
 	e.GET("/home/automation/create", func(c echo.Context) error {
-		user_claims, err := helper.JWT(c)
 
-		if err != nil || user_claims.Role != 2 {
-			c.Redirect(http.StatusSeeOther, "/404")
+		extra_value, user_id, err := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
+		if err != nil {
+			c.Redirect(http.StatusSeeOther, "/logout")
 		}
 
-		user := models.User{}
+		posts := []models.Post{}
 
-		helper.Database.Db.Preload("Posts").First(&user, "token = ?", user_claims.Token)
+		helper.Database.Db.Where("user_id = ?", user_id).Find(&posts)
 
-		extra_value := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 2)
 		extra_value["body"] = helper.UserSidebar("/home/automations")
-		extra_value["posts"] = user.Posts
+		extra_value["posts"] = posts
 		return c.Render(http.StatusOK, "user/automation/create", extra_value)
 	})
 
@@ -225,13 +252,10 @@ func main() {
 	// Admin
 
 	e.GET("/admin", func(c echo.Context) error {
-		user_claims, err := helper.JWT(c)
-
-		if err != nil || user_claims.Role != 1 {
-			c.Redirect(http.StatusSeeOther, "/404")
+		send_data, _, err := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 1)
+		if err != nil {
+			c.Redirect(http.StatusSeeOther, "/logout")
 		}
-
-		send_data := helper.PageDataCreator(c, "Chito Tiktok", "", "", "", "", true, 1)
 
 		users := user.GetAnyVerifiedUsers(0)
 
@@ -240,13 +264,11 @@ func main() {
 	})
 
 	e.GET("/admin/verified", func(c echo.Context) error {
-		user_claims, err := helper.JWT(c)
+		send_data, _, err := helper.PageDataCreator(c, "Chito Tiktok", "404", "", "It looks like you are lost.. Want to go back?", "/", true, 1)
 
-		if err != nil || user_claims.Role != 1 {
-			c.Redirect(http.StatusSeeOther, "/404")
+		if err != nil {
+			c.Redirect(http.StatusSeeOther, "/logout")
 		}
-
-		send_data := helper.PageDataCreator(c, "Chito Tiktok", "404", "", "It looks like you are lost.. Want to go back?", "/", true, 1)
 
 		users := user.GetAnyVerifiedUsers(1)
 		send_data["users"] = users

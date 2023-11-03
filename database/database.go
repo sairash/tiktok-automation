@@ -33,7 +33,7 @@ func ConnectDb() {
 		}
 	}
 
-	if err = db.AutoMigrate(&models.User{}, &models.Account{}, &models.Post{}, &models.UserStatusType{}, &models.Device{}, &models.Role{}, &models.Country{}, &models.Otp{}, &models.Group{}, &models.GroupDetail{}, &models.CharacterSheet{}, &models.UserCharacter{}, &models.AccountPost{}); err == nil {
+	if err = db.AutoMigrate(&models.User{}, &models.Account{}, &models.Post{}, &models.Proxy{}, &models.Notification{}, &models.Name{}, &models.UserStatusType{}, &models.Device{}, &models.Role{}, &models.Country{}, &models.Otp{}, &models.Group{}, &models.GroupDetail{}, &models.CharacterSheet{}, &models.UserCharacter{}, &models.AccountPost{}); err == nil {
 
 		if (db.Migrator().HasTable(&models.Role{})) {
 

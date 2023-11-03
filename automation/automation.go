@@ -98,11 +98,11 @@ func ExecuteFirstEventFromLog(key string) {
 					}
 				case "refresh_account":
 					if len(val[0][0].NeededAccountIds) > 0 {
-						RefreshAccount(val[0][0].NeededAccountIds, key)
+						RefreshAccount(val[0][0].NeededAccountIds, val[0][0].UserId, key)
 					}
 				case "delete_posts":
 					if len(val[0][0].NeededAccountIds) > 0 {
-						delete_all_posts(val[0][0].NeededAccountIds, key)
+						delete_all_posts(val[0][0].NeededAccountIds, val[0][0].UserId, key)
 					}
 				case "post":
 					if len(val[0][0].NeededAccountIds) > 0 {

@@ -110,7 +110,8 @@ func createAccountHelper(user_id uint, amount int) uint {
 	go devices_in_use.addToDeviceInUse(device.Id)
 
 	url := url_generator("register")
-	jsonBody := []byte(fmt.Sprintf(`{"device_data": "%s"}`, device.DeviceInfo))
+	proxy := helper.GetWorkingProxy(user_id)
+	jsonBody := []byte(fmt.Sprintf(`{"device_data": "%s", "proxy": "%s", "name": "Myname", "bio": "new_bio"}`, device.DeviceInfo, proxy))
 
 	bodyReader := bytes.NewReader(jsonBody)
 
@@ -133,6 +134,8 @@ func createAccountHelper(user_id uint, amount int) uint {
 	}
 
 	if res.StatusCode != http.StatusOK {
+		fmt.Println(res.Body)
+		fmt.Println(json.NewDecoder(res.Body))
 		if amount > 2 {
 			return 0
 		}
@@ -192,7 +195,7 @@ func CreateAccount(amount int, user_id uint, automation_key string) {
 
 }
 
-func upload(session, tiktok_user_id, type_of_post, post_id, path, desc, music string, amount int) string {
+func upload(session, tiktok_user_id, type_of_post, post_id, path, desc, music string, amount int, user_id uint) string {
 	device := models.Device{}
 	if len(devices_in_use.device) > 0 {
 		helper.Database.Db.Select("id", "device_info", "blocked").Where("id NOT IN (?) AND blocked = 0", devices_in_use.device).First(&device)
@@ -206,7 +209,9 @@ func upload(session, tiktok_user_id, type_of_post, post_id, path, desc, music st
 	go devices_in_use.addToDeviceInUse(device.Id)
 	path = strings.Join(strings.Split(path, "\\"), "/")
 	url := url_generator("upload")
-	jsonBody := []byte(fmt.Sprintf(`{"session":"%s","tiktok_user_id":"%s","type_of_post":"%s","post_id":"%s","path":"%s","desc":"%s","music":"%s", "device_data": "%s"}`, session, tiktok_user_id, type_of_post, post_id, path, desc, music, device.DeviceInfo))
+	proxy := helper.GetWorkingProxy(user_id)
+
+	jsonBody := []byte(fmt.Sprintf(`{"session":"%s","tiktok_user_id":"%s","type_of_post":"%s","post_id":"%s","path":"%s","desc":"%s","music":"%s", "device_data": "%s", "proxy": "%s"}`, session, tiktok_user_id, type_of_post, post_id, path, desc, music, device.DeviceInfo, proxy))
 
 	bodyReader := bytes.NewReader(jsonBody)
 
@@ -228,7 +233,7 @@ func upload(session, tiktok_user_id, type_of_post, post_id, path, desc, music st
 		if amount >= 2 {
 			return ""
 		}
-		return upload(session, type_of_post, post_id, path, desc, music, tiktok_user_id, amount+1)
+		return upload(session, type_of_post, post_id, path, desc, music, tiktok_user_id, amount+1, user_id)
 	}
 
 	if res.StatusCode != http.StatusOK {
@@ -246,14 +251,14 @@ func upload(session, tiktok_user_id, type_of_post, post_id, path, desc, music st
 		if len(strings.Split(errorRes.Error, "|||||Blocked!|||||")) > 1 {
 			BlockDevice(device.Id)
 		}
-		return upload(session, type_of_post, post_id, path, desc, music, tiktok_user_id, amount+1)
+		return upload(session, type_of_post, post_id, path, desc, music, tiktok_user_id, amount+1, user_id)
 	}
 
 	var accountData TiktokUploadResponse
 	decoder := json.NewDecoder(res.Body)
 	if err := decoder.Decode(&accountData); err != nil {
 		fmt.Println("Error decoding JSON response:", err)
-		return upload(session, type_of_post, post_id, path, desc, music, tiktok_user_id, amount+1)
+		return upload(session, type_of_post, post_id, path, desc, music, tiktok_user_id, amount+1, user_id)
 	}
 
 	return accountData.PostId
@@ -278,7 +283,7 @@ func PostToTikTok(post_id int, user_id uint, account_ids []uint, automation_key 
 			UserId:    user_id,
 			PostID:    post.Id,
 			AccountId: account.Id,
-			TikId:     upload(account.Session, account.TikUserId, post.Type, post.Path, fullPath, post.Desc, post.Music, 0),
+			TikId:     upload(account.Session, account.TikUserId, post.Type, post.Path, fullPath, post.Desc, post.Music, 0, user_id),
 		})
 	}
 
@@ -321,7 +326,7 @@ func ClearAccount(account_ids []uint, key string) {
 	RemoveUserIdTOOtherEvents(account_ids, key)
 }
 
-func RefreshAccount(accounts_uids []uint, automation_key string) {
+func RefreshAccount(accounts_uids []uint, user_id uint, automation_key string) {
 	accounts := []models.Account{}
 	helper.Database.Db.Select("id", "tik_user_id").Where("id IN ?", accounts_uids).Find(&accounts)
 	for _, account := range accounts {
@@ -340,7 +345,8 @@ func RefreshAccount(accounts_uids []uint, automation_key string) {
 	}
 }
 
-func DeletePost(account_session, post_id string, amount, total_likes, total_views, post_likes, post_views int) (int, int) {
+func DeletePost(account_session, post_id string, amount, total_likes, total_views, post_likes, post_views int, user_id uint) (int, int) {
+	proxy := helper.GetWorkingProxy(user_id)
 
 	device := models.Device{}
 	if len(devices_in_use.device) > 0 {
@@ -356,7 +362,7 @@ func DeletePost(account_session, post_id string, amount, total_likes, total_view
 
 	url := url_generator("delete")
 
-	jsonBody := []byte(fmt.Sprintf(`{"session_id":"%s", "video_id":"%s", "device_data": "%s"}`, account_session, post_id, device.DeviceInfo))
+	jsonBody := []byte(fmt.Sprintf(`{"session_id":"%s", "video_id":"%s", "device_data": "%s", "proxy": "%s"}`, account_session, post_id, device.DeviceInfo, proxy))
 
 	bodyReader := bytes.NewReader(jsonBody)
 
@@ -381,14 +387,13 @@ func DeletePost(account_session, post_id string, amount, total_likes, total_view
 		if amount >= 2 {
 			return total_likes, total_views
 		}
-		return DeletePost(account_session, post_id, amount+1, total_likes, total_views, post_likes, post_views)
+		return DeletePost(account_session, post_id, amount+1, total_likes, total_views, post_likes, post_views, user_id)
 	}
 	helper.Database.Db.Delete(&models.AccountPost{}, "tik_id = ?", post_id)
 	return total_likes - post_likes, total_views - post_views
 }
 
-func delete_all_posts(user_ids []uint, automation_key string) {
-
+func delete_all_posts(user_ids []uint, user_id uint, automation_key string) {
 	accounts := []models.Account{}
 	helper.Database.Db.Select("id", "session", "total_views", "total_likes").Where("id IN ?", user_ids).Find(&accounts)
 	for _, account := range accounts {
@@ -404,7 +409,7 @@ func delete_all_posts(user_ids []uint, automation_key string) {
 		helper.Database.Db.Select("id", "tik_id", "total_views", "total_likes").Where("account_id = ?", account.Id).Find(&posts)
 
 		for _, post := range posts {
-			total_views, total_likes = DeletePost(account.Session, post.TikId, 0, total_likes, total_views, post.TotalViews, post.TotalLikes)
+			total_views, total_likes = DeletePost(account.Session, post.TikId, 0, total_likes, total_views, post.TotalViews, post.TotalLikes, user_id)
 		}
 
 		if account.TotalLikes != total_likes || account.TotalViews != total_views {

@@ -25,6 +25,10 @@ func Api(e *echo.Echo) {
 	e.POST("/home/account/automate", accountController.AutomateDisplay)
 	e.GET("/home/tiktok/post/delete/:tiktok_id/:id/:postid", accountController.RemovePost)
 
+	e.POST("/home/name/create", accountController.NameAdd)
+	e.POST("/home/proxy/create", accountController.ProxyAdd)
+	e.GET("/home/proxy/refresh/:id", accountController.ProxyRefresh)
+
 	g := e.Group("/user")
 	// g.GET("/", hello_api)
 	g.POST("/signin", userController.Login)

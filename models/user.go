@@ -24,6 +24,7 @@ type User struct {
 	Status_until     time.Time
 	Posts            []Post
 	Accounts         []Account
+	Notifications    []Notification
 	Dob              time.Time `json:"dob"`
 	CreatedAt        time.Time `gorm:"autoCreateTime"`
 	UpdatedAt        time.Time `gorm:"autoUpdateTime"`
