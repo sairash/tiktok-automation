@@ -28,6 +28,7 @@ func Api(e *echo.Echo) {
 	e.POST("/home/name/create", accountController.NameAdd)
 	e.POST("/home/proxy/create", accountController.ProxyAdd)
 	e.GET("/home/proxy/refresh/:id", accountController.ProxyRefresh)
+	e.GET("/home/proxy/delete/:id", accountController.ProxyDelete)
 
 	g := e.Group("/user")
 	// g.GET("/", hello_api)

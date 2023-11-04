@@ -207,3 +207,25 @@ func ProxyRefresh(c echo.Context) error {
 
 	return c.Redirect(http.StatusSeeOther, "/home/proxies")
 }
+
+func ProxyDelete(c echo.Context) error {
+	user_claims, err := helper.JWT(c)
+
+	if err != nil || user_claims.Role != 2 {
+		c.Redirect(http.StatusSeeOther, "/404")
+	}
+
+	user := models.User{}
+
+	helper.Database.Db.First(&user, "token = ?", user_claims.Token)
+
+	if user.Id == 0 {
+		return c.Redirect(http.StatusSeeOther, "/logout")
+	}
+
+	id := c.Param("id")
+
+	helper.Database.Db.Where("id = ?", id).Delete(&models.Proxy{})
+
+	return c.Redirect(http.StatusSeeOther, "/home/proxies")
+}
