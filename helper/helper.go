@@ -480,28 +480,33 @@ func PageDataCreator(c echo.Context, title, header, body, sub_body, link string,
 		"go_to_link":     link,
 		"show_app_bar":   show_app_bar,
 	}
-	page_header := echo.Map{}
+	page_header := echo.Map{
+		"show_notifications": false,
+	}
 
 	user_id := uint(0)
 	if show_app_bar {
-		user_claims, err := JWT(c)
+		if role != 0 {
+			user_claims, err := JWT(c)
 
-		if err != nil {
-			role = 0
-		} else {
-			role = user_claims.Role
+			if err != nil {
+				role = 0
+			} else {
+				role = user_claims.Role
+			}
+			user := models.User{}
+			Database.Db.Preload("Notifications", func(db *gorm.DB) *gorm.DB {
+				return db.Where("seen = ?", false)
+			}).Where("token = ?", user_claims.Token).First(&user)
+
+			if user.Id == 0 {
+				return nil, user_id, fmt.Errorf("Error User")
+			}
+
+			user_id = user.Id
+			page_header["notification_count"] = int64(len(user.Notifications))
+			page_header["show_notifications"] = true
 		}
-		user := models.User{}
-		Database.Db.Preload("Notifications", func(db *gorm.DB) *gorm.DB {
-			return db.Where("seen = ?", false)
-		}).Where("token = ?", user_claims.Token).First(&user)
-
-		if user.Id == 0 {
-			return nil, user_id, fmt.Errorf("Error User")
-		}
-
-		user_id = user.Id
-		page_header["notification_count"] = int64(len(user.Notifications))
 
 		if role == 0 {
 			page_header["buttons"] = map[string]string{
