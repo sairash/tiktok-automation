@@ -1,3 +1,5 @@
+[![Made With Golang](https://img.shields.io/badge/made%20using-golang-blue?style=for-the-badge&logo=go)](https://go.dev/)
+
 ## Tiktok automation server
 **Technologies used**
 - **Echo**: labstack/echo/v4 for server
